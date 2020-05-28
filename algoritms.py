@@ -173,7 +173,6 @@ class Blockwise:
         block_three = (- array(delta_reverse).dot(Y))
         block_four = delta_reverse
         self.combine(block_one, block_two, block_three, block_four)
-        return self.reverse
 
     def check_size(self):
         if self.matr_len == 8:
