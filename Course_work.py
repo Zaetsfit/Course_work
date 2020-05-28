@@ -5,13 +5,16 @@ from tkinter.ttk import *
 from random import randint
 from math import *
 from convertor import Convertor
+from algoritms import *
+from file_saving import *
+import time
 
 
 class Window:
     def __init__(self, window):
         self.window = window
         self.size = 0
-        self.matrix = []
+        self.reversed_matrix = []
         self.interface()
         self.button()
         self.enter_matr()
@@ -31,12 +34,6 @@ class Window:
     def random_values(self):
         self.matr = [randint(1, self.size * 3) for i in range(self.size**2)]
 
-    def Matrix(self, size):
-        for i in range(size):
-            self.matrix.append([])
-            for j in range(size):
-                self.matrix[i].append(0)
-
     """Function that convert array of  numbers to matrix arrays"""
 
     def convert_to_matr(self):
@@ -52,7 +49,7 @@ class Window:
     def interface(self):
         self.window.maxsize(width=720, height=540)
         self.window.title('Калькулятор оберненої матриці')
-        self.window.geometry('720x540')
+        self.window.geometry('720x540+350+150')
         self.window['bg'] = '#818281'
         lb = Label(self.window, text='Выбери размер матрицы',
                    foreground='#eee', background='#333',
@@ -62,19 +59,22 @@ class Window:
 
     def get_size(self):
         self.set_size(int(self.combo.get()[0]))
-        self.Matrix(self.size)
         print(type(self.size), self.size)
 
     """Get elements of matrix, try to convert them.In case of mistake, show error"""
 
     def get_elements(self):
         self.elements = Convertor.convert(self.entry.get('1.0', END))
-        if len(self.elements) != self.size**2:
+        if self.elements == False:
             showerror(title='Error',
                       message=f"Введите правильное количество символов '{self.size**2}' и убедитесь в правильности ввода!")
-        self.matr = self.elements
-        self.convert_to_matr()
-        print(self.sequence_converted)
+        elif len(self.elements) != self.size**2:
+            showerror(title='Error',
+                      message=f"Введите правильное количество символов '{self.size**2}' и убедитесь в правильности ввода!")
+        else:
+            self.matr = self.elements
+            self.convert_to_matr()
+        # print(self.sequence_converted)
 
     """Combox for choosing matrix size"""
 
@@ -129,13 +129,19 @@ class Window:
     """Another one window, that we'll see after calculations"""
 
     def output_result(self):
-        size = int(len(self.sequence_converted))
+        showinfo(
+            title='Info', message="Результат будет сохранёт в файл, просмотрите вашу директорию!")
+        saving = Saving()
+        saving.save(self.reversed_matrix)
+        time.sleep(1)
+        size = self.size
         new_window = Tk()
         new_window.title("Обернена мариця")
+        new_window.geometry('+1100+200')
         for i in range(size):
             for j in range(size):
-                matr = ttk.Label(new_window, text='0',
-                                 width=10, justify=CENTER)
+                matr = ttk.Button(new_window, text=str(float("{:.4f}".format(self.reversed_matrix[j][i]))),
+                                  width=10)
                 matr.grid(column=i, row=j)
         new_window.mainloop()
 
@@ -150,7 +156,8 @@ class Window:
         entry_space.tag_add('title', 1.0, "1.end")
         entry_space.tag_config('title', font=(
             'Arial', 13, 'bold'), justify=CENTER)
-        print(self.sequence_converted)
+        for i in self.sequence_converted:
+            print(i)
         for i in self.sequence_converted[::-1]:
             entry_space.insert(3.0, str(i) + '\n')
             entry_space.tag_add('matr', 3.0, f"{str(self.size+2)}.end")
@@ -176,6 +183,23 @@ class Window:
         def_place.tag_config('title', font=(
             "Calibri", 14, 'bold'), justify=CENTER)
         def_place.place(x=385, y=155, height=300, width=329)
+
+    def calculation_ending(self):
+        ending = Edging(self.sequence_converted)
+        if any(ending.check_on_zero()) == False:
+            showerror(title='Error',
+                      message=f"Алгоритм не может посчитать данную матрицу!")
+        else:
+            self.reversed_matrix = ending.check_on_zero()
+
+    def calculation_blocks(self):
+        blocks = Blockwise(self.sequence_converted)
+        blocks.check_size()
+        if any(blocks.check_size()) == False:
+            showerror(title='Error',
+                      message=f"Алгоритм не может посчитать данную матрицу!")
+        else:
+            self.reversed_matrix = array(blocks.reverse)
 
     """Methods and descriptions"""
 
@@ -203,7 +227,8 @@ class Window:
         burr_des.place(x=1, y=1)
 
         # First button
-        burr_btn = Button(method, text="Окаймление", command=self.get_elements)
+        burr_btn = Button(method, text="Окаймление",
+                          command=self.calculation_ending)
         burr_btn.place(x=199, y=13, width=150, height=60)
 
         # Second sescription
@@ -225,7 +250,8 @@ class Window:
         sep_des.place(x=1, y=139)
 
         # Second button
-        sep_btn = Button(method, text="Разбиение на клетки")
+        sep_btn = Button(method, text="Разбиение на клетки",
+                         command=self.calculation_blocks)
         sep_btn.place(x=199, y=164, width=150, height=60)
 
 
