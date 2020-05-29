@@ -7,6 +7,7 @@ from math import *
 from convertor import Convertor
 from algoritms import *
 from file_saving import *
+from can_be_inversed import *
 import time
 
 
@@ -51,7 +52,7 @@ class Window:
         self.window.title('Калькулятор оберненої матриці')
         self.window.geometry('720x540+350+150')
         self.window['bg'] = '#818281'
-        lb = Label(self.window, text='Выбери размер матрицы',
+        lb = Label(self.window, text='Виберіть розмір матриці',
                    foreground='#eee', background='#333',
                    font='Calibri 14 bold', justify=CENTER).place(y=13, x=255, height=40)
 
@@ -66,11 +67,11 @@ class Window:
     def get_elements(self):
         self.elements = Convertor.convert(self.entry.get('1.0', END))
         if self.elements == False:
-            showerror(title='Error',
-                      message=f"Введите правильное количество символов '{self.size**2}' и убедитесь в правильности ввода!")
+            showerror(title='Помилка!',
+                      message=f"Введіть правильну кількість символів '{self.size**2}' та переконайтеся, що ви все правильно ввели!")
         elif len(self.elements) != self.size**2:
-            showerror(title='Error',
-                      message=f"Введите правильное количество символов '{self.size**2}' и убедитесь в правильности ввода!")
+            showerror(title='Помилка!',
+                      message=f"Введіть правильну кількість символів '{self.size**2}' та переконайтеся, що ви все правильно ввели!")
         else:
             self.matr = self.elements
             self.convert_to_matr()
@@ -97,14 +98,14 @@ class Window:
 
     def enter_matr(self):
         self.enter_btn = Button(
-            self.window, text='Ввести матрицу', command=self.user_entry_place)
+            self.window, text='Задати матрицю', command=self.user_entry_place)
         self.enter_btn.place(y=155, x=10, width=170, height=40)
 
     # buttons for choosing
 
     def generate_matr(self):
         self.enter_gener = Button(
-            self.window, text='Сгенирировать матрицу', command=self.entry_space_gener)
+            self.window, text='Згенерувати матрицю', command=self.entry_space_gener)
         self.enter_gener.place(y=155, x=192, width=170, height=40)
     """//////////////////////////////////////////////////////////////////////"""
 
@@ -112,7 +113,7 @@ class Window:
 
     def calc_button(self):
         self.calc_btn = Button(
-            self.window, text="Посчитать", command=self.output_result)
+            self.window, text="Порахувати", command=self.output_result)
         self.calc_btn.place(y=485, x=10, width=150, height=40)
 
     def button_to_get_input(self):
@@ -121,16 +122,16 @@ class Window:
         self.to_get_btn.place(y=462, x=564, width=150, height=40)
 
     def warning_box(self):
-        txt = f"Введите числа матрицы, как в премере ниже!\nПример: 1, 6, 2, 9, 2, 1..."
+        txt = f"Введіть елементи матриці, як показано в прикладі!\nПриклад: 1,6,2,9,2,1..."
         self.warning = Label(self.window, text=txt, background='#fc0303',
-                             foreground='white', font='Calibri 12 bold')
-        self.warning.place(x=385, y=154)
+                             foreground='white', font='Calibri 11 bold')
+        self.warning.place(x=385, y=154, width=330)
 
     """Another one window, that we'll see after calculations"""
 
     def output_result(self):
         showinfo(
-            title='Info', message="Результат будет сохранёт в файл, просмотрите вашу директорию!")
+            title='Інформація!', message="Результат буде збережений у файл, прогляньте вашу директорію!")
         saving = Saving()
         saving.save(self.reversed_matrix)
         time.sleep(1)
@@ -152,7 +153,7 @@ class Window:
         self.random_values()
         self.convert_to_matr()
         entry_space = Text(self.window)
-        entry_space.insert(1.0, "Сгенерированая матрица\n\n")
+        entry_space.insert(1.0, "Згенерована Матриця\n\n")
         entry_space.tag_add('title', 1.0, "1.end")
         entry_space.tag_config('title', font=(
             'Arial', 13, 'bold'), justify=CENTER)
@@ -163,7 +164,7 @@ class Window:
             entry_space.tag_add('matr', 3.0, f"{str(self.size+2)}.end")
             entry_space.tag_config('matr', font=(
                 'Calibri', 11, 'bold'))
-        entry_space.place(x=385, y=154, height=301, width=329)
+        entry_space.place(x=385, y=154, height=301, width=330)
 
     # Blank sheet for entry matrix elements
     def user_entry_place(self):
@@ -178,28 +179,38 @@ class Window:
 
     def default_place(self):
         def_place = Text(self.window)
-        def_place.insert(1.0, "Место для ввода элементов матрици")
+        def_place.insert(1.0, "Місце для вводу елементів матриці")
         def_place.tag_add('title', 1.0, '1.end')
         def_place.tag_config('title', font=(
             "Calibri", 14, 'bold'), justify=CENTER)
         def_place.place(x=385, y=155, height=300, width=329)
 
     def calculation_ending(self):
-        ending = Edging(self.sequence_converted)
-        if any(ending.check_on_zero()) == False:
-            showerror(title='Error',
-                      message=f"Алгоритм не может посчитать данную матрицу!")
+        check_determ = Inversed(self.sequence_converted)
+        if check_determ.check_determinant():
+            ending = Edging(self.sequence_converted)
+            if any(ending.check_on_zero()) == False:
+                showerror(title='Помилка!',
+                          message=f"Алгоритм не може порахувати дану матрицю!")
+            else:
+                self.reversed_matrix = ending.check_on_zero()
         else:
-            self.reversed_matrix = ending.check_on_zero()
+            showerror(
+                title='Помилка!', message='Матриця є виродженою, тому неможливо знайти обернену до неї!')
 
     def calculation_blocks(self):
-        blocks = Blockwise(self.sequence_converted)
-        blocks.check_size()
-        if any(blocks.check_size()) == False:
-            showerror(title='Error',
-                      message=f"Алгоритм не может посчитать данную матрицу!")
+        check_determ = Inversed(self.sequence_converted)
+        if check_determ.check_determinant():
+            blocks = Blockwise(self.sequence_converted)
+            blocks.check_size()
+            if any(blocks.check_size()) == False:
+                showerror(title='Помилка!',
+                          message=f"Алгоритм не може порахувати дану матрицю!")
+            else:
+                self.reversed_matrix = array(blocks.reverse)
         else:
-            self.reversed_matrix = array(blocks.reverse)
+            showerror(
+                title='Помилка!', message='Матриця є виродженою, тому неможливо знайти обернену до неї!')
 
     """Methods and descriptions"""
 
@@ -215,19 +226,20 @@ class Window:
         scroll_1.place(x=165, y=1, height=100)
         burr_des.config(yscrollcommand=scroll_1.set)
 
-        burr_des.insert(1.0, "Внимание\n")
+        burr_des.insert(1.0, "Увага\n")
         burr_des.tag_add('title', 1.0, '1.end')
         burr_des.tag_config('title', font=(
             "Calibri", 13, 'bold'), justify=CENTER)
         burr_des.insert(
-            2.0, "Данный алгоритм можно применять к квадратной матрице любой размерности f nff ervs svtb sbrs aaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaa aaaaaaaaaaaaa")
+            2.0, "Даний алгоритм можна застосовувати до довільної квадратної матриці будь-якої размерності. Обовязковою умовою є те,\
+            що матриця повинна бути невиродженою, тобто її визначние не повинен дорівнювати 0. Головним обмеженням даного алгоритму є те, що він не розрхований на матриці, на головній діагоналі якої присунні нулі.")
         burr_des.tag_add('text', 2.0, '2.end')
         burr_des.tag_config('text', font=(
             "Arial", 10, 'bold'), justify=LEFT)
         burr_des.place(x=1, y=1)
 
         # First button
-        burr_btn = Button(method, text="Окаймление",
+        burr_btn = Button(method, text="Окаймлення",
                           command=self.calculation_ending)
         burr_btn.place(x=199, y=13, width=150, height=60)
 
@@ -238,19 +250,20 @@ class Window:
         scroll_2.place(x=165, y=140, height=100)
         sep_des.config(yscrollcommand=scroll_2.set)
 
-        sep_des.insert(1.0, "Внимание\n")
+        sep_des.insert(1.0, "Увага\n")
         sep_des.tag_add('title', 1.0, '1.end')
         sep_des.tag_config('title', font=(
             "Calibri", 13, 'bold'), justify=CENTER)
         sep_des.insert(
-            2.0, "Данный алгоритм можно применять к квадратной матрице размерности 4х4, 8х8, bvelyjb, qfwv,wvgwvwv wevvvvvvv wegv www fvvvvvvvvvvvvvvvvvw wwwwwwwwwww")
+            2.0, "Даний алгоритм можна застосовувати до квадратної матриці, але обмежених розмірностей: 4х4 та 8х8,\
+            це головне обмеження щодо застосування даного алгоритму. Обовязковою умовою є те, що матриця повинна бути невиродженою, тобто її визначние не повинен дорівнювати 0.")
         sep_des.tag_add('text', 2.0, '2.end')
         sep_des.tag_config('text', font=(
             "Arial", 10, 'bold'), justify=LEFT)
         sep_des.place(x=1, y=139)
 
         # Second button
-        sep_btn = Button(method, text="Разбиение на клетки",
+        sep_btn = Button(method, text="Розбиття на клітинки",
                          command=self.calculation_blocks)
         sep_btn.place(x=199, y=164, width=150, height=60)
 

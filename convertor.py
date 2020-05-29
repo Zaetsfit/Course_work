@@ -6,5 +6,8 @@ class Convertor(object):
         for element in sequence:
             if element in big_letters or element in small_letters or element in symbols:
                 return False
-        numbers_sequence = list(map(float, sequence.split(',')))
-        return numbers_sequence
+        try:
+            numbers_sequence = list(map(float, sequence.split(',')))
+            return numbers_sequence
+        except Exception:
+            return False
